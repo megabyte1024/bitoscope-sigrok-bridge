@@ -45,7 +45,7 @@ sudo apt install build-essential cmake git autoconf automake libtool pkg-config 
 ### Windows
 
 glib, libzip and libusb come from [vcpkg](https://github.com/microsoft/vcpkg), installed into `C:\vcpkg`;
-the build installs the three itself. libsigrok is built with [MSYS2](https://www.msys2.org), installed
+`scripts\install_msvc_dlls.cmd` (see How to compile) installs the three into the clone. libsigrok is built with [MSYS2](https://www.msys2.org), installed
 into `C:\msys64`, in its UCRT64 environment. The same in Command Prompt and PowerShell:
 
 ```bat
@@ -56,7 +56,12 @@ C:\msys64\usr\bin\bash.exe -lc "pacman -S --needed --noconfirm base-devel mingw-
 
 ## How to compile
 
+A new clone needs a one-time setup that builds libsigrok and fetches the other dependencies into
+`third_party/`. After that, a build is a single command.
+
 ### Linux
+
+One-time setup:
 
 ```sh
 git clone https://github.com/megabyte1024/bitoscope-sigrok-bridge.git
@@ -64,12 +69,17 @@ cd bitoscope-sigrok-bridge
 sh scripts/build_libsigrok_linux.sh
 sh scripts/fetch_sigrok_firmware.sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+```
+
+Every build:
+
+```sh
 cmake --build build --parallel $(cmake -P cmake/BitoscopeBuildJobs.cmake)
 ```
 
 ### Windows
 
-Command Prompt or PowerShell:
+Command Prompt or PowerShell. One-time setup:
 
 ```bat
 git clone https://github.com/megabyte1024/bitoscope-sigrok-bridge.git
@@ -80,8 +90,26 @@ cmake --build build --config Release --target bridge_usb
 C:\msys64\usr\bin\env.exe MSYSTEM=UCRT64 CHERE_INVOKING=1 /usr/bin/bash -lc "sh scripts/build_libsigrok.sh"
 C:\msys64\usr\bin\env.exe MSYSTEM=UCRT64 CHERE_INVOKING=1 /usr/bin/bash -lc "sh scripts/fetch_sigrok_firmware.sh"
 cmake -S . -B build
+```
+
+`scripts\install_msvc_dlls.cmd` takes about an hour the first time on a machine; later runs take the
+packages from vcpkg's cache.
+
+Every build:
+
+```bat
 cmake --build build --config Release
 ```
+
+### When to repeat a setup step
+
+- `third_party/` removed: the whole setup again.
+- `build/` removed: only the last `cmake -S . -B build` of the setup.
+- After a `git pull`, repeat the steps whose input changed:
+  - `scripts/vcpkg/vcpkg.json` (Windows): `scripts\install_msvc_dlls.cmd`, then the build. CMake does not
+    notice this change.
+  - The libsigrok commit named in the libsigrok build script, or `usbshim/` (Windows): the libsigrok
+    build (on Windows with the `bridge_usb` build before it), then the build.
 
 ## Install
 
