@@ -86,7 +86,17 @@ cmake --build build --config Release
 ## Install
 
 bitoscope looks for drivers in the `drivers/` folder next to `bitoscope_gui`. Copy the whole content
-of the driver folder (see Output) there, subfolders included.
+of the driver folder (see Output) there, subfolders included, or let CMake do it by passing the folder
+that holds `bitoscope_gui` as the prefix:
+
+```sh
+cmake --install build --prefix /path/to/bitoscope_gui_folder
+```
+
+On Windows add `--config Release`.
+
+It installs the driver executable, the USB shim, libsigrok with its libraries and the firmware (if
+fetched) into `drivers/` under the prefix, and nothing else (no debug symbols or import libraries).
 
 Firmware is looked up in the folder named by `SIGROK_FIRMWARE_DIR`, then in `sigrok-firmware/`
 beside the driver, then, on Linux, in `/usr/local/share/sigrok-firmware` and
