@@ -1,4 +1,4 @@
-# Sigrok bridge driver for bitoscope
+# sigrok USB driver bridge for bitoscope
 
 Driver for the USB logic analyzers supported by
 [libsigrok](https://sigrok.org/wiki/Libsigrok), for use with the bitoscope host.
