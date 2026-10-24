@@ -1,0 +1,6 @@
+{
+  "name": "bitoscope-sigrok-bridge-msvc-dlls",
+  "version": "0.0.0",
+  "description": "The DLLs of the bridge that are built with MSVC; libsigrok-4.dll itself is built with MinGW (scripts/build_libsigrok.sh).",
+  "dependencies": [ "glib", "libzip", "libusb" ]
+}

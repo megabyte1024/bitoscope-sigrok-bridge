@@ -1,0 +1,11 @@
+# Build trees
+/build*/
+
+# libsigrok, its build, its firmware and the MSVC libraries are put here by scripts/; they are not part of this repo.
+/third_party/
+
+__pycache__/
+
+# Captures and logs from test runs
+*.h5
+*.log
