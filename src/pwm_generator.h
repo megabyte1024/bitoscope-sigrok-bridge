@@ -167,6 +167,8 @@ struct PwmPropertyDefinition {
 std::vector<PwmPropertyDefinition> pwmPropertyDefinitions(std::span<const std::string> groupNames,
                                                           const PwmLimits& limits);
 
+bitoscope_property pwmProperty(const PwmPropertyDefinition& definition);
+
 void addPwmGenerator(bitoscope_device* listed, BridgeDevice& device);
 
 }

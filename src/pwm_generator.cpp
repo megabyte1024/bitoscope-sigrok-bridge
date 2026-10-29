@@ -638,6 +638,24 @@ std::vector<PwmPropertyDefinition> pwmPropertyDefinitions(std::span<const std::s
   return list;
 }
 
+bitoscope_property pwmProperty(const PwmPropertyDefinition& definition) {
+  bitoscope_property property{};
+  property.id = definition.id.c_str();
+  property.name = definition.name.c_str();
+  property.type = definition.type;
+  property.help = definition.help.c_str();
+  property.group = definition.group.c_str();
+  property.unit = definition.unit;
+  property.changeable_during_capture = definition.changeableDuringCapture ? 1 : 0;
+  property.has_minimum = definition.hasMinimum ? 1 : 0;
+  property.minimum = definition.minimum;
+  property.has_maximum = definition.hasMaximum ? 1 : 0;
+  property.maximum = definition.maximum;
+  property.default_value = definition.defaultValue;
+  property.boolean_style = definition.booleanStyle;
+  return property;
+}
+
 void addPwmGenerator(bitoscope_device* listed, BridgeDevice& device) {
   device.pwm = PwmGenerator{};
   if (device.driver == nullptr || device.sdi == nullptr || device.row == nullptr) {
@@ -670,36 +688,18 @@ void addPwmGenerator(bitoscope_device* listed, BridgeDevice& device) {
   generator.max_frequency_milli_hz = limits.maxHz * 1000;
   generator.supports_synchronized_start = 0;
   generator.apply_properties = applyProperties;
-  if (listed != nullptr && bitoscope_add_signal_generator(listed, &generator) != BITOSCOPE_OK) {
-    bitoscope_log(BITOSCOPE_LOG_ERROR, "the SDK refused the signal generator of %s", device.id.c_str());
+  const std::vector<PwmPropertyDefinition> definitions = pwmPropertyDefinitions(names, limits);
+  std::vector<bitoscope_property> properties;
+  for (const PwmPropertyDefinition& definition : definitions) {
+    properties.push_back(pwmProperty(definition));
+  }
+  generator.properties = properties.data();
+  generator.num_properties = properties.size();
+  if (listed != nullptr && bitoscope_add_signal_generator(listed, &generator, nullptr) != BITOSCOPE_OK) {
     return;
   }
   device.pwm.groups = std::move(groups);
   device.pwm.control = PwmControl(names, limits);
-
-  for (const PwmPropertyDefinition& definition : pwmPropertyDefinitions(names, limits)) {
-    if (listed == nullptr) {
-      break;
-    }
-    bitoscope_property property{};
-    property.id = definition.id.c_str();
-    property.name = definition.name.c_str();
-    property.type = definition.type;
-    property.help = definition.help.c_str();
-    property.group = definition.group.c_str();
-    property.unit = definition.unit;
-    property.changeable_during_capture = definition.changeableDuringCapture ? 1 : 0;
-    property.has_minimum = definition.hasMinimum ? 1 : 0;
-    property.minimum = definition.minimum;
-    property.has_maximum = definition.hasMaximum ? 1 : 0;
-    property.maximum = definition.maximum;
-    property.default_value = definition.defaultValue;
-    property.boolean_style = definition.booleanStyle;
-    if (bitoscope_add_property(listed, BITOSCOPE_SIGNAL_GENERATOR_FACET, &property) != BITOSCOPE_OK) {
-      bitoscope_log(BITOSCOPE_LOG_ERROR, "the SDK refused the property %s of %s", definition.id.c_str(),
-                    device.id.c_str());
-    }
-  }
   bitoscope_log(BITOSCOPE_LOG_INFO, "%s: %zu PWM outputs (%s ...), %llu to %llu Hz", device.id.c_str(),
                 device.pwm.groups.size(), names.front().c_str(), static_cast<unsigned long long>(limits.minHz),
                 static_cast<unsigned long long>(limits.maxHz));

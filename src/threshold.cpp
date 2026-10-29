@@ -265,48 +265,50 @@ bool describeThreshold(ThresholdKind kind, GVariant* list, GVariant* current, Th
   return ok;
 }
 
-GVariant* thresholdVariant(const ThresholdSetting& setting, const bitoscope_property_value& value) {
+GVariant* thresholdVariant(const ThresholdSetting& setting, const bitoscope_capture& capture) {
   switch (setting.kind) {
     case ThresholdKind::customRange:
-      return g_variant_new_double(static_cast<double>(value.integer) / powerOfTen(setting.digits));
+      return g_variant_new_double(static_cast<double>(bitoscope_property_integer(&capture, thresholdId)) /
+                                  powerOfTen(setting.digits));
     case ThresholdKind::voltageTuples: {
-      if (value.enum_index >= setting.tuples.size()) {
+      const uint32_t index = bitoscope_property_enum_index(&capture, thresholdId);
+      if (index >= setting.tuples.size()) {
         return nullptr;
       }
-      const auto& tuple = setting.tuples[value.enum_index];
+      const auto& tuple = setting.tuples[index];
       GVariant* range[2] = {g_variant_new_double(tuple.first), g_variant_new_double(tuple.second)};
       return g_variant_new_tuple(range, 2);
     }
-    case ThresholdKind::presetNames:
-      if (value.enum_index >= setting.names.size()) {
+    case ThresholdKind::presetNames: {
+      const uint32_t index = bitoscope_property_enum_index(&capture, thresholdId);
+      if (index >= setting.names.size()) {
         return nullptr;
       }
-      return g_variant_new_string(setting.names[value.enum_index].c_str());
+      return g_variant_new_string(setting.names[index].c_str());
+    }
     case ThresholdKind::none:
       break;
   }
   return nullptr;
 }
 
-void addThresholdProperty(bitoscope_device* listed, BridgeDevice& device) {
+bool findThreshold(BridgeDevice& device, ThresholdDescription& description) {
   device.threshold = ThresholdSetting();
   if (device.driver == nullptr || device.sdi == nullptr) {
-    return;
+    return false;
   }
-  ThresholdDescription description;
-  bool found = false;
   for (ThresholdKind kind :
        {ThresholdKind::customRange, ThresholdKind::voltageTuples, ThresholdKind::presetNames}) {
     if (queryThreshold(device, kind, description)) {
-      found = true;
-      break;
+      device.threshold = description.setting;
+      return true;
     }
   }
-  if (!found) {
-    return;
-  }
+  return false;
+}
 
-  std::vector<const char*> namePointers;
+bitoscope_property thresholdProperty(const ThresholdDescription& description, std::vector<const char*>& namePointers) {
+  namePointers.clear();
   for (const std::string& name : description.itemNames) {
     namePointers.push_back(name.c_str());
   }
@@ -334,23 +336,14 @@ void addThresholdProperty(bitoscope_device* listed, BridgeDevice& device) {
     property.num_items = description.itemNumbers.size();
     property.default_index = description.defaultIndex;
   }
-  if (listed != nullptr && bitoscope_add_property(listed, "la.acquisition", &property) != BITOSCOPE_OK) {
-    bitoscope_log(BITOSCOPE_LOG_ERROR, "%s: the SDK refused the threshold property", device.id.c_str());
-    return;
-  }
-  device.threshold = description.setting;
+  return property;
 }
 
 int applyThreshold(BridgeDevice& device, const bitoscope_capture& capture) {
   if (device.threshold.kind == ThresholdKind::none) {
     return SR_OK;
   }
-  const bitoscope_property_value* value =
-      bitoscope_find_property_value(capture.properties, capture.num_properties, thresholdId);
-  if (value == nullptr) {
-    return SR_OK;
-  }
-  GVariant* variant = thresholdVariant(device.threshold, *value);
+  GVariant* variant = thresholdVariant(device.threshold, capture);
   if (variant == nullptr) {
     return SR_ERR_ARG;
   }

@@ -103,11 +103,9 @@ std::string nameOf(const sr_dev_inst* sdi, bool demo, const char* driverName) {
   return name + " (sigrok)";
 }
 
-bool listAnalyzer(bitoscope_device* listed, BridgeDevice& device, std::string& whyNot) {
-  if (bitoscope_set_name(listed, device.name.c_str()) != BITOSCOPE_OK) {
-    whyNot = "SDK refused device " + device.id;
-    return false;
-  }
+bool listAnalyzer(bitoscope_device* listed, BridgeDevice& device, const ThresholdDescription* threshold,
+                  bitoscope_reply* reply) {
+  (void)bitoscope_set_name(listed, device.name.c_str());
   if (!device.serialNumber.empty()) {
     bitoscope_set_serial_number(listed, device.serialNumber.c_str());
   }
@@ -133,25 +131,30 @@ bool listAnalyzer(bitoscope_device* listed, BridgeDevice& device, std::string& w
   analyzer.default_sample_rate_milli_hz = device.defaultSampleRateMilliHz;
   analyzer.channel_presets = presets.data();
   analyzer.num_channel_presets = presets.size();
-  if (bitoscope_add_logic_analyzer(listed, &analyzer) != BITOSCOPE_OK) {
-    whyNot = "SDK refused logic analyzer of " + device.id;
-    return false;
+  analyzer.silence_limit_ms = kSilenceLimitMs;
+  std::vector<const char*> thresholdNames;
+  std::vector<bitoscope_property> properties;
+  if (threshold != nullptr) {
+    properties.push_back(thresholdProperty(*threshold, thresholdNames));
   }
-  return true;
+  analyzer.properties = properties.data();
+  analyzer.num_properties = properties.size();
+  return bitoscope_add_logic_analyzer(listed, &analyzer, reply) == BITOSCOPE_OK;
 }
 
-bool addToEntry(bitoscope_device* listed, BridgeDevice& device, std::string& whyNot) {
-  if (listed != nullptr && !listAnalyzer(listed, device, whyNot)) {
+bool addToEntry(bitoscope_device* listed, BridgeDevice& device, bitoscope_reply* reply) {
+  ThresholdDescription threshold;
+  const bool hasThreshold = findThreshold(device, threshold);
+  if (listed != nullptr && !listAnalyzer(listed, device, hasThreshold ? &threshold : nullptr, reply)) {
     return false;
   }
-  addThresholdProperty(listed, device);
   addPwmGenerator(listed, device);
   return true;
 }
 
 }
 
-int describeDevice(BridgeDevice& device, bitoscope_device* listed, std::string& whyNot) {
+int describeDevice(BridgeDevice& device, bitoscope_device* listed, bitoscope_reply* reply, std::string& whyNot) {
   const sr_dev_driver* driver = device.driver;
   const sr_dev_inst* sdi = device.sdi;
   const bool demo = device.row == &demoDriverRow();
@@ -209,7 +212,7 @@ int describeDevice(BridgeDevice& device, bitoscope_device* listed, std::string& 
   device.threshold = ThresholdSetting{};
   device.pwm = PwmGenerator{};
 
-  if (!addToEntry(listed, device, whyNot)) {
+  if (!addToEntry(listed, device, reply)) {
     return BITOSCOPE_ERROR;
   }
   bitoscope_log(BITOSCOPE_LOG_INFO, "described %s \"%s\": %zu channels, %zu sample rates", device.id.c_str(),

@@ -12,7 +12,7 @@ namespace sigrok_bridge {
 
 struct BridgeDevice;
 
-int describeDevice(BridgeDevice& device, bitoscope_device* listed, std::string& whyNot);
+int describeDevice(BridgeDevice& device, bitoscope_device* listed, bitoscope_reply* reply, std::string& whyNot);
 
 }
 

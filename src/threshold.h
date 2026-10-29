@@ -47,9 +47,11 @@ uint32_t thresholdKey(ThresholdKind kind);
 
 bool describeThreshold(ThresholdKind kind, GVariant* list, GVariant* current, ThresholdDescription& out);
 
-GVariant* thresholdVariant(const ThresholdSetting& setting, const bitoscope_property_value& value);
+GVariant* thresholdVariant(const ThresholdSetting& setting, const bitoscope_capture& capture);
 
-void addThresholdProperty(bitoscope_device* listed, BridgeDevice& device);
+bool findThreshold(BridgeDevice& device, ThresholdDescription& description);
+
+bitoscope_property thresholdProperty(const ThresholdDescription& description, std::vector<const char*>& namePointers);
 
 int applyThreshold(BridgeDevice& device, const bitoscope_capture& capture);
 

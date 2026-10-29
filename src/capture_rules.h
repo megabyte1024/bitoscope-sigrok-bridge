@@ -70,13 +70,9 @@ SampleLimitPlan planSampleLimit(const SampleLimitFacts& facts);
 inline constexpr int kWriteOk = 0;
 inline constexpr int kWriteOver = 1;
 
-inline constexpr int64_t kSilenceLimitMs = 5000;
+inline constexpr uint32_t kSilenceLimitMs = 5000;
 inline constexpr int64_t kStopLimitMs = 3000;
 inline constexpr int64_t kDriverEndLimitMs = 1000;
-inline constexpr int64_t kHostStopAnswerMs = 5000;
-inline constexpr int64_t kHostStopAnswerMarginMs = 500;
-static_assert(kDriverEndLimitMs + kStopLimitMs + kHostStopAnswerMarginMs <= kHostStopAnswerMs,
-              "a capture's worst end stays half a second inside the host's wait for its STOP's answer");
 
 struct WriteOutcome {
   int status = kWriteOk;
@@ -127,6 +123,8 @@ class CaptureRules {
 
   void internalError() noexcept;
 
+  void sinkFailed() noexcept;
+
   TickAction tick(int64_t nowMs, bool hostStopping) noexcept;
 
   bool stopPending() const noexcept;
@@ -148,7 +146,6 @@ class CaptureRules {
     kDelivery,
     kEarlyEnd,
     kSessionEnded,
-    kSilence,
     kUsbTransfer,
     kInternal,
   };

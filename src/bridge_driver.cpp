@@ -114,7 +114,7 @@ int Bridge::identify(const bitoscope_found_device& found, bitoscope_device* devi
   BridgeDevice described;
   takeScan(described, found, scan);
   std::string whyNot;
-  return answer(reply, describeDevice(described, device, whyNot), whyNot);
+  return answer(reply, describeDevice(described, device, reply, whyNot), whyNot);
 }
 
 int Bridge::open(const bitoscope_found_device& found, void** session, bitoscope_reply* reply) {
@@ -129,7 +129,7 @@ int Bridge::open(const bitoscope_found_device& found, void** session, bitoscope_
   auto opened = std::make_unique<BridgeDevice>();
   takeScan(*opened, found, scan);
   std::string whyNot;
-  if (const int status = describeDevice(*opened, nullptr, whyNot); status != BITOSCOPE_OK) {
+  if (const int status = describeDevice(*opened, nullptr, reply, whyNot); status != BITOSCOPE_OK) {
     return answer(reply, status, whyNot);
   }
   clearLastSigrokError();

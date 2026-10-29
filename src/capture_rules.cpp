@@ -207,18 +207,17 @@ void CaptureRules::sessionStopped() noexcept {
 
 void CaptureRules::internalError() noexcept { fail(Failure::kInternal); }
 
+void CaptureRules::sinkFailed() noexcept { fail(Failure::kDelivery); }
+
 TickAction CaptureRules::tick(int64_t nowMs, bool hostStopping) noexcept {
   if (sessionStopped_ || abandoned_) {
     return TickAction::kNothing;
   }
   if (state_ == State::kRunning) {
-    if (hostStopping) {
-      state_ = State::kOver;
-    } else if (nowMs - lastSampleMs_ >= kSilenceLimitMs) {
-      fail(Failure::kSilence);
-    } else {
+    if (!hostStopping) {
       return TickAction::kNothing;
     }
+    state_ = State::kOver;
   }
   if (!ending_) {
     if (awaitingDriver_ && nowMs - awaitingSinceMs_ < kDriverEndLimitMs) {
@@ -283,9 +282,6 @@ CaptureResult CaptureRules::result(std::string_view sigrokError) const {
       break;
     case Failure::kSessionEnded:
       what = "libsigrok's session ended by itself" + after + ", before a STOP or the sample limit";
-      break;
-    case Failure::kSilence:
-      what = "device stopped delivering samples: none for " + seconds(kSilenceLimitMs) + "," + after;
       break;
     case Failure::kUsbTransfer:
       what = plural(failureNumbers_[0], "USB sample transfer", "USB sample transfers") + " failed" + after +

@@ -39,6 +39,9 @@ namespace sigrok_bridge {
 
 namespace {
 
+constexpr int64_t kSdkStopLimitMarginMs = 500;
+static_assert(kDriverEndLimitMs + kStopLimitMs + kSdkStopLimitMarginMs <= BITOSCOPE_STOP_LIMIT_MS,
+              "a capture's worst end stays half a second inside the SDK's limit from STOP to the capture's return");
 
 constexpr guint kTickMs = 50;
 
@@ -217,6 +220,9 @@ void noteDecided(Session& session, int64_t now) noexcept {
 void tick(Session& session) noexcept {
   const int64_t now = nowMs();
   session.rules.usbFailuresNow(bridge_usb_failed_transfer_count());
+  if (bitoscope_capture_failed(session.sink) != 0) {
+    session.rules.sinkFailed();
+  }
   const TickAction action = session.rules.tick(now, bitoscope_stopping(session.sink) != 0);
   noteDecided(session, now);
   switch (action) {
