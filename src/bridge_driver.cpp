@@ -18,7 +18,7 @@ namespace sigrok_bridge {
 namespace {
 
 constexpr const char* kDisplayName = "sigrok bridge";
-constexpr const char* kVersion = "0.1.0";
+constexpr const char* kVersion = "0.2.0";
 constexpr const char* kDemoDeviceId = "demo-0";
 
 Bridge& bridgeOf(void* user) { return *static_cast<Bridge*>(user); }
