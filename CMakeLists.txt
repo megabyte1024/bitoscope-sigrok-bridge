@@ -243,9 +243,9 @@ set_target_properties(sigrok_bridge PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/drivers"
 )
 if(MSVC)
-  set(sigrok_bridge_plugin_dir "${CMAKE_BINARY_DIR}/drivers/$<CONFIG>")
+  set(sigrok_bridge_driver_dir "${CMAKE_BINARY_DIR}/drivers/$<CONFIG>")
 else()
-  set(sigrok_bridge_plugin_dir "${CMAKE_BINARY_DIR}/drivers")
+  set(sigrok_bridge_driver_dir "${CMAKE_BINARY_DIR}/drivers")
 endif()
 if(MSVC)
   set(sigrok_bridge_vcpkg_dll_files "")
@@ -274,13 +274,13 @@ if(MSVC)
 else()
   set_target_properties(sigrok_bridge PROPERTIES BUILD_RPATH "$ORIGIN/lib" INSTALL_RPATH "$ORIGIN/lib")
   set(sigrok_bridge_dll_commands
-      COMMAND "${CMAKE_COMMAND}" -E make_directory "${sigrok_bridge_plugin_dir}/lib"
+      COMMAND "${CMAKE_COMMAND}" -E make_directory "${sigrok_bridge_driver_dir}/lib"
       COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${sigrok_bridge_libsigrok_so}"
-              "${sigrok_bridge_plugin_dir}/lib/${SIGROK_BRIDGE_LIBSIGROK_SONAME}")
+              "${sigrok_bridge_driver_dir}/lib/${SIGROK_BRIDGE_LIBSIGROK_SONAME}")
   if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sigrok-firmware")
     list(APPEND sigrok_bridge_dll_commands
         COMMAND "${CMAKE_COMMAND}" -E copy_directory
-                "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sigrok-firmware" "${sigrok_bridge_plugin_dir}/sigrok-firmware")
+                "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sigrok-firmware" "${sigrok_bridge_driver_dir}/sigrok-firmware")
   endif()
   add_custom_target(sigrok_bridge_dlls ${sigrok_bridge_dll_commands} VERBATIM)
   add_dependencies(sigrok_bridge_dlls bridge_usb)
