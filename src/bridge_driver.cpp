@@ -18,7 +18,7 @@ namespace sigrok_bridge {
 namespace {
 
 constexpr const char* kDisplayName = "sigrok bridge";
-constexpr const char* kVersion = "0.3.0";
+constexpr const char* kVersion = "0.4.0";
 constexpr const char* kDemoDeviceId = "demo-0";
 
 Bridge& bridgeOf(void* user) { return *static_cast<Bridge*>(user); }
@@ -44,13 +44,15 @@ void closeAtSessionEnd(void* user, void* session) { bridgeOf(user).close(session
 
 Bridge::Bridge(std::span<const DriverRow> table, DemoMode demo) : table_(table), demo_(demo) {
   if (demo_ == DemoMode::kOff) {
+    std::vector<bitoscope_usb_id> ids;
     for (const DeclaredUsbId& id : declaredUsbIds(table_)) {
-      usbIds_.push_back({id.vendorId, id.productId, id.interfaceNumber, id.genericName});
+      ids.push_back({id.vendorId, id.productId, id.interfaceNumber, id.genericName});
     }
+    finder_ = bitoscope_usb_finder(ids.data(), ids.size());
   }
 }
 
-Bridge::~Bridge() = default;
+Bridge::~Bridge() { bitoscope_free_finder(finder_); }
 
 bitoscope_driver Bridge::description() {
   bitoscope_driver driver{};
@@ -62,8 +64,7 @@ bitoscope_driver Bridge::description() {
   driver.close = closeAtSessionEnd;
   if (demo_ == DemoMode::kOff) {
     driver.transport = BITOSCOPE_TRANSPORT_USB;
-    driver.usb_ids = usbIds_.data();
-    driver.num_usb_ids = usbIds_.size();
+    driver.finder = finder_;
   } else {
     driver.transport = BITOSCOPE_TRANSPORT_NONE;
     driver.enumerate = enumerateDevices;

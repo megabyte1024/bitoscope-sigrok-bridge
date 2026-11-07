@@ -51,6 +51,8 @@ endif()
 
 include(cmake/BitoscopeBuildJobs.cmake)
 
+include(cmake/BitoscopeOptimization.cmake)
+
 add_subdirectory(sdk)
 
 include(cmake/BitoscopeOwnTargetWarnings.cmake)
@@ -201,7 +203,7 @@ add_library(sigrok_bridge_device STATIC
 )
 target_include_directories(sigrok_bridge_device PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 target_link_libraries(sigrok_bridge_device PUBLIC
-    bitoscope_driver_c_sdk sigrok_bridge_sigrok sigrok_bridge_usb_shim sigrok_bridge_table sigrok_bridge_listing)
+    bitoscope_driver_usb_sdk sigrok_bridge_sigrok sigrok_bridge_usb_shim sigrok_bridge_table sigrok_bridge_listing)
 sigrok_bridge_compile_settings(sigrok_bridge_device)
 
 add_library(sigrok_bridge_threshold STATIC src/threshold.cpp)
@@ -308,5 +310,6 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/private/CMakeLists.txt")
   add_subdirectory(private)
 endif()
 
-# WHY: Last, after every add_subdirectory: a target added below this line would get no warnings.
+# WHY: Last, after every add_subdirectory: a target added below this line would get no warnings or optimization.
 bitoscope_enable_warnings_on_own_targets("${CMAKE_SOURCE_DIR}")
+bitoscope_optimize_own_targets("${CMAKE_SOURCE_DIR}")

@@ -10,6 +10,7 @@
 
 #include <glib.h>
 
+#include "bitoscope_driver_usb.h"
 #include "bridge_device.h"
 #include "listing_rules.h"
 #include "sigrok_context.h"
@@ -106,11 +107,11 @@ std::string usbIdText(uint16_t vendorId, uint16_t productId) {
 OneDeviceScan scanOneDevice(std::span<const DriverRow> table, const bitoscope_found_device& device) {
   OneDeviceScan result;
   const std::string id = device.id != nullptr ? device.id : "";
-  if (device.transport != BITOSCOPE_TRANSPORT_USB || device.usb == nullptr) {
+  bitoscope_usb_location usb{};
+  if (device.transport != BITOSCOPE_TRANSPORT_USB || bitoscope_usb_location_of(&device, &usb) != BITOSCOPE_OK) {
     result.text = "device \"" + id + "\" was not found on USB";
     return result;
   }
-  const bitoscope_usb_location& usb = *device.usb;
   const std::string conn = sigrokConn(usb.bus, usb.address);
   const std::string portPath = usbPortPath(usb.bus, std::span<const uint8_t>(usb.ports, usb.num_ports));
   std::string tried;

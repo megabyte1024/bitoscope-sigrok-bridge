@@ -15,7 +15,11 @@ set(BUILD_TESTING OFF)
 # WHY: Set OFF, not AUTO: the build must not pick up an OpenSSL or zlib that happens to be installed.
 set(WITH_OPENSSL OFF CACHE STRING "")
 set(WITH_ZLIB OFF CACHE STRING "")
+if(BITOSCOPE_LTO AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+endif()
 add_subdirectory("${capnproto_SOURCE_DIR}/c++" "${capnproto_BINARY_DIR}" EXCLUDE_FROM_ALL)
+unset(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE)
 
 function(bitoscope_enable_warnings target)
   # WHY: C4324 only reports padding an alignas asks for, GCC and Clang have no such warning (owner, 2026-10-21).
@@ -36,3 +40,4 @@ add_subdirectory(libs/plugin_ring)
 add_subdirectory(libs/driver_ring)
 add_subdirectory(libs/plugin_c_sdk)
 add_subdirectory(libs/driver_c_sdk)
+add_subdirectory(libs/driver_usb_sdk)

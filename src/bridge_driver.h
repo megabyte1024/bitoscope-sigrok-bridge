@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include "bitoscope_driver.h"
+#include "bitoscope_driver_usb.h"
 
 #include "bridge_device.h"
 #include "listing_rules.h"
@@ -35,7 +35,7 @@ class Bridge {
  private:
   std::span<const DriverRow> table_;
   DemoMode demo_;
-  std::vector<bitoscope_usb_id> usbIds_;
+  bitoscope_finder* finder_ = nullptr;
   BridgeDevice* held_ = nullptr;
 };
 
