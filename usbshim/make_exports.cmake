@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+cmake_minimum_required(VERSION 3.30...4.4)
+
 foreach(variable DUMPBIN OBJECT REAL_DLL OUTPUT)
   if(NOT DEFINED ${variable})
     message(FATAL_ERROR "make_exports.cmake: -D${variable}=... is missing")

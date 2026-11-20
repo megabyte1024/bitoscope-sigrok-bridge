@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.30...4.4)
 
 project(sigrok_bridge LANGUAGES C CXX)
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 if(NOT MSVC AND NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
   message(FATAL_ERROR "The bridge is built with MSVC on Windows and with GCC or Clang on Linux (README.md).")
